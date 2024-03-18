@@ -9,14 +9,16 @@ import {
 	Post,
 	Put,
 	Query,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common'
+import { Types } from 'mongoose'
+import { OnlyAdminGuard } from 'src/auth/guards/admin.guard'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard'
 import { IdValidationPipe } from '../pipes/id.validation.pipe'
 import { CreateMovieDto } from './dto/create-movie.dto'
 import { MovieService } from './movie.service'
-import { Auth } from 'src/auth/decorators/Auth.decorator'
-import { Types } from 'mongoose'
 
 @Controller('movies')
 export class MovieController {
@@ -58,14 +60,14 @@ export class MovieController {
 	}
 
 	@Get(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async get(@Param('id', IdValidationPipe) id: string) {
 		return this.movieService.byId(id)
 	}
 
 	@Post()
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async create() {
 		return this.movieService.create()
 	}
@@ -73,7 +75,7 @@ export class MovieController {
 	@UsePipes(new ValidationPipe())
 	@Put(':id')
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async update(
 		@Param('id', IdValidationPipe) id: string,
 		@Body() dto: CreateMovieDto
@@ -84,7 +86,7 @@ export class MovieController {
 	}
 
 	@Delete(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async delete(@Param('id', IdValidationPipe) id: string) {
 		const deletedDoc = await this.movieService.delete(id)
 		if (!deletedDoc) throw new NotFoundException('Movie not found')

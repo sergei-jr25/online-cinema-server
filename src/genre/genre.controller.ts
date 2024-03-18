@@ -4,16 +4,17 @@ import {
 	Delete,
 	Get,
 	HttpCode,
-	Logger,
 	NotFoundException,
 	Param,
 	Post,
 	Put,
 	Query,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common'
-import { Auth } from 'src/auth/decorators/Auth.decorator'
+import { OnlyAdminGuard } from 'src/auth/guards/admin.guard'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard'
 import { IdValidationPipe } from 'src/pipes/id.validation.pipe'
 import { CreateGenreDto } from './dto/create-genre.dto'
 import { GenreService } from './genre.service'
@@ -43,7 +44,7 @@ export class GenreController {
 	}
 
 	@Get(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async get(@Param('id', IdValidationPipe) id: string) {
 		return this.genreService.byId(id)
 	}
@@ -51,7 +52,7 @@ export class GenreController {
 	@UsePipes(new ValidationPipe())
 	@Post()
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async create() {
 		return this.genreService.create()
 	}
@@ -59,7 +60,7 @@ export class GenreController {
 	@UsePipes(new ValidationPipe())
 	@Put(':id')
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async update(
 		@Param('id', IdValidationPipe) id: string,
 		@Body() dto: CreateGenreDto
@@ -70,7 +71,7 @@ export class GenreController {
 	}
 
 	@Delete(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async delete(@Param('id', IdValidationPipe) id: string) {
 		const deletedDoc = await this.genreService.delete(id)
 		if (!deletedDoc) throw new NotFoundException('Genre not found')

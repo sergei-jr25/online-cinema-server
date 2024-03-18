@@ -4,10 +4,12 @@ import {
 	Post,
 	Query,
 	UploadedFile,
+	UseGuards,
 	UseInterceptors,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { Auth } from 'src/auth/decorators/Auth.decorator'
+import { OnlyAdminGuard } from 'src/auth/guards/admin.guard'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard'
 import { FileResponse } from './dto/file.response'
 import { FilesService } from './files.service'
 
@@ -17,12 +19,12 @@ export class FilesController {
 
 	@Post()
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	@UseInterceptors(FileInterceptor('image'))
 	async uploadFile(
 		@UploadedFile() file: Express.Multer.File,
 		@Query('folder') folder?: string
-	): Promise<FileResponse[]> {		
+	): Promise<FileResponse[]> {
 		return this.filesService.saveFiles([file], folder)
 	}
 }

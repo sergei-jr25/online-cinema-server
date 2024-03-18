@@ -9,23 +9,25 @@ import {
 	Post,
 	Put,
 	Query,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common'
-import { User } from './decorators/user.decorator'
-import { UserService } from './user.service'
-import { Auth } from 'src/auth/decorators/Auth.decorator'
-import { UpdateDto } from './dto/update.dto'
-import { IdValidationPipe } from 'src/pipes/id.validation.pipe'
-import { UserModel } from './user.model'
 import { Types } from 'mongoose'
+import { OnlyAdminGuard } from 'src/auth/guards/admin.guard'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard'
+import { IdValidationPipe } from 'src/pipes/id.validation.pipe'
+import { User } from './decorators/user.decorator'
+import { UpdateDto } from './dto/update.dto'
+import { UserModel } from './user.model'
+import { UserService } from './user.service'
 
 @Controller('users')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
 	@Get('profile')
-	@Auth()
+	@UseGuards(JwtAuthGuard)
 	async getProfile(@User('_id') _id: string) {
 		return this.userService.byId(_id)
 	}
@@ -33,20 +35,20 @@ export class UserController {
 	@UsePipes(new ValidationPipe())
 	@Put('profile')
 	@HttpCode(200)
-	@Auth()
+	@UseGuards(JwtAuthGuard)
 	async updateProfile(@User('_id') _id: string, @Body() data: UpdateDto) {
 		return this.userService.updateProfile(_id, data)
 	}
 
 	@Get('profile/favorites')
-	@Auth()
+	@UseGuards(JwtAuthGuard)
 	async getFavorites(@User('_id') _id: string) {
 		return this.userService.getFavoriteMovies(_id)
 	}
 
 	@Post('profile/favorites')
 	@HttpCode(200)
-	@Auth()
+	@UseGuards(JwtAuthGuard)
 	async toggleFavorite(
 		@Body('movieId', IdValidationPipe) movieId: Types.ObjectId,
 		@User() user: UserModel
@@ -55,19 +57,19 @@ export class UserController {
 	}
 
 	@Get('count')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async getCountUsers() {
 		return this.userService.getCount()
 	}
 
 	@Get()
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async getUsers(@Query('searchTerm') searchTerm?: string) {
 		return this.userService.getAll(searchTerm)
 	}
 
 	@Get(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async getUser(@Param('id', IdValidationPipe) id: string) {
 		return this.userService.byId(id)
 	}
@@ -75,7 +77,7 @@ export class UserController {
 	@UsePipes(new ValidationPipe())
 	@Put(':id')
 	@HttpCode(200)
-	// @Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async updateUser(
 		@Param('id', IdValidationPipe) id: string,
 		@Body() data: UpdateDto
@@ -84,7 +86,7 @@ export class UserController {
 	}
 
 	@Delete(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async delete(@Param('id', IdValidationPipe) id: string) {
 		const deletedDoc = await this.userService.delete(id)
 		if (!deletedDoc) throw new NotFoundException('Movie not found')

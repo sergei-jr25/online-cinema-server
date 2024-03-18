@@ -9,10 +9,12 @@ import {
 	Post,
 	Put,
 	Query,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common'
-import { Auth } from 'src/auth/decorators/Auth.decorator'
+import { OnlyAdminGuard } from 'src/auth/guards/admin.guard'
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard'
 import { IdValidationPipe } from 'src/pipes/id.validation.pipe'
 import { ActorService } from './actor.service'
 import { CreateActorDto } from './dto/create-actor.dto'
@@ -34,13 +36,13 @@ export class ActorController {
 	@UsePipes(new ValidationPipe())
 	@Post()
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async create() {
 		return this.actorService.create()
 	}
 
 	@Get(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async get(@Param('id', IdValidationPipe) id: string) {
 		return this.actorService.byId(id)
 	}
@@ -48,7 +50,7 @@ export class ActorController {
 	@UsePipes(new ValidationPipe())
 	@Put(':id')
 	@HttpCode(200)
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async update(
 		@Param('id', IdValidationPipe) id: string,
 		@Body() dto: CreateActorDto
@@ -59,7 +61,7 @@ export class ActorController {
 	}
 
 	@Delete(':id')
-	@Auth('admin')
+	@UseGuards(JwtAuthGuard, OnlyAdminGuard)
 	async delete(@Param('id', IdValidationPipe) id: string) {
 		const deletedDoc = await this.actorService.delete(id)
 		if (!deletedDoc) throw new NotFoundException('Actor not found')
